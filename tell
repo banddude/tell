@@ -1,0 +1,43 @@
+#!/bin/bash
+# tell - Send messages between Claude Code agents in tmux sessions
+# https://github.com/mikejshaffer/tell
+
+LOG_FILE="${TELL_LOG_FILE:-$HOME/.claude/agent_messages.log}"
+mkdir -p "$(dirname "$LOG_FILE")"
+
+TARGET="$1"
+shift
+MESSAGE="$*"
+
+if [ -z "$TARGET" ] || [ -z "$MESSAGE" ]; then
+    echo "Usage: tell <agent> <message>"
+    echo "Example: tell work check the invoices"
+    exit 1
+fi
+
+# Detect sender from tmux session name
+if [ -n "$TMUX" ]; then
+    SENDER=$(tmux display-message -p '#S')
+else
+    SENDER="external"
+fi
+
+SENDER_UPPER=$(echo "$SENDER" | tr '[:lower:]' '[:upper:]')
+FORMATTED_MSG="[AGENT MSG FROM $SENDER_UPPER]: $MESSAGE"
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+# Log the message
+echo "[$TIMESTAMP] $SENDER -> $TARGET: $MESSAGE" >> "$LOG_FILE"
+
+# Check if target session exists
+if ! tmux has-session -t "$TARGET" 2>/dev/null; then
+    echo "Error: Agent '$TARGET' is not running"
+    echo "Active agents:"
+    tmux list-sessions -F "  - #S" 2>/dev/null
+    exit 1
+fi
+
+# Send message to target agent
+tmux send-keys -t "$TARGET" "$FORMATTED_MSG" && tmux send-keys -t "$TARGET" C-m
+
+echo "Message sent to $TARGET"
