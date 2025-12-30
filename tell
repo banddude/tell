@@ -1,6 +1,6 @@
 #!/bin/bash
 # tell - Send messages between Claude Code agents in tmux sessions
-# https://github.com/mikejshaffer/tell
+# https://github.com/banddude/tell
 
 LOG_FILE="${TELL_LOG_FILE:-$HOME/.claude/agent_messages.log}"
 mkdir -p "$(dirname "$LOG_FILE")"
