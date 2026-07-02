@@ -1,0 +1,15 @@
+#!/bin/bash
+# tell-local - Send messages to local tmux sessions (called by remote tell)
+TARGET="$1"
+MESSAGE="$2"
+SENDER="$3"
+
+SENDER_UPPER=$(echo "$SENDER" | tr '[:lower:]' '[:upper:]')
+FORMATTED_MSG="[AGENT MSG FROM $SENDER_UPPER]: $MESSAGE"
+
+if /usr/local/bin/tmux has-session -t "$TARGET" 2>/dev/null; then
+    /usr/local/bin/tmux send-keys -t "$TARGET" "$FORMATTED_MSG" && /usr/local/bin/tmux send-keys -t "$TARGET" C-m
+    exit 0
+else
+    exit 1
+fi
